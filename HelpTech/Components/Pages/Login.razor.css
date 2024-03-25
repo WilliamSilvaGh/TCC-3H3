@@ -1,0 +1,78 @@
+﻿/* Estilos para a página de login */
+
+/* Estilo para o contêiner de alinhamento */
+.alinhamento {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Alinha verticalmente ao centro */
+    text-align: left; /* Alinha o texto ao centro */
+    height: 100vh;
+    max-width: 812px;
+    margin: 0 auto;
+}
+
+    /* Estilo para o título "Login" */
+    .alinhamento h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    /* Estilo para o link "Cadastre aqui" */
+    /*.alinhamento a {
+        color: #007bff;
+        text-decoration: none;
+    }*/
+
+        .alinhamento a:hover {
+            text-decoration: underline;
+        }
+
+/* Estilo para o seletor de tipo de conta */
+#tipo-de-conta {
+    width: 207px;
+    height: auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background-color: #808080;
+    color: white;
+    font-weight: bold;
+
+}
+
+/* Estilo para as labels */
+label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Estilo para os campos de entrada */
+input[type="email"],
+input[type="password"] {
+    width: 207px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background-color: #808080;
+}
+
+/* Estilo para o botão */
+button {
+    width: 207px;
+    padding: 12px;
+    border: none;
+    background-color: red;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+        background-color: white;
+        color: black;
+        font-weight:bold;
+}

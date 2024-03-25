@@ -1,0 +1,35 @@
+/* Estilos para a p�gina inicial */
+
+/* Estilo para o cont�iner de alinhamento */
+.alinhamento {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    height: 100vh;
+}
+
+    /* Estilo para o t�tulo "Seja bem-vindo ao HelpTech" */
+    .alinhamento h1 {
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+
+    /* Estilo para o bot�o "Nova Ocorr�ncia" */
+    .alinhamento button {
+        padding: 12px 24px;
+        background-color: red;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+.alinhamento button:hover {
+    background-color: white;
+    color: black;
+    font-weight: bold;
+}

@@ -1,0 +1,37 @@
+﻿@page "/login"
+
+    <link rel="stylesheet" href="css/app.css" />
+
+<div class="alinhamento">
+    <h1>Login</h1>
+    <p>Não tem uma conta? <a href="#">Cadastre aqui</a></p>
+        <div>
+            <label for="tipo-de-conta">TIPO DE CONTA:</label>
+            <br>
+            <select id="tipo-de-conta">
+                <option value="aluno">Aluno</option>
+                <option value="administrador">Administrador</option>
+            </select>
+        </div>
+        <br>
+        <div>
+            <label for="email-institucional">EMAIL INSTITUCIONAL</label><br>
+            <input type="email" id="email-institucional" name="email-institucional">
+        </div>
+        <br>
+        <div>
+            <label for="senha">Senha</label><br>
+            <input type="password" id="senha" name="senha">
+        </div>
+        <br>
+        <br>
+        <button>Entrar</button>
+</div>
+
+@code {
+    // if (tipo-de-conta == "aluno") {
+    //     navigationManager.NavigateTo("/aluno");
+    // } else {
+    //     navigationManager.NavigateTo("/administrador");
+    // }
+}
