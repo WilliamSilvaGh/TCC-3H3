@@ -40,11 +40,13 @@ namespace HelpTech.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("varchar(1000)");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(15)");
 
-                    b.Property<int>("TipoOcorrencia")
-                        .HasColumnType("int");
+                    b.Property<string>("TipoOcorrencia")
+                        .IsRequired()
+                        .HasColumnType("varchar(15)");
 
                     b.Property<Guid>("UsuarioId")
                         .HasColumnType("char(36)");

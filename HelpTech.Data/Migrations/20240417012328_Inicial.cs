@@ -39,9 +39,11 @@ namespace HelpTech.Data.Migrations
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Descricao = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    TipoOcorrencia = table.Column<int>(type: "int", nullable: false),
+                    TipoOcorrencia = table.Column<string>(type: "varchar(15)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     DataHora = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "varchar(15)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     DescricaoResolucao = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     UsuarioId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),

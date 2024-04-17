@@ -1,5 +1,6 @@
 ﻿using HelpTech.Domain.Entities.Base;
 using HelpTech.Domain.Enumerators;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HelpTech.Domain.Entities
 {
@@ -7,10 +8,12 @@ namespace HelpTech.Domain.Entities
     {
         public string Descricao { get; set; }
 
+        [Column(TypeName = "varchar(15)")]
         public EnumTipoOcorrencia TipoOcorrencia { get; set; }
 
         public DateTime DataHora { get; set; }
 
+        [Column(TypeName = "varchar(15)")]
         public EnumStatus Status { get; set; }
 
         public string DescricaoResolucao { get; set; }

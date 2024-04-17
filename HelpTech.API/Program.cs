@@ -44,6 +44,7 @@ app.MapGet("/ocorrencia/listar", (HelpTechContext context) =>
         Id = ocorrencia.Id,
         UsuarioNome = ocorrencia.Usuario.Nome,
         Descricao = ocorrencia.Descricao,
+        DescricaoResolucao = ocorrencia.DescricaoResolucao,
         TipoOcorrencia = ocorrencia.TipoOcorrencia,
         Status = ocorrencia.Status
     });
@@ -70,6 +71,7 @@ app.MapGet("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorrenc
         Id = ocorrencia.Id,
         UsuarioId = ocorrencia.UsuarioId,
         Descricao = ocorrencia.Descricao,
+        DescricaoResolucao = ocorrencia.DescricaoResolucao,
         TipoOcorrencia = ocorrencia.TipoOcorrencia,
         DataHora = ocorrencia.DataHora,
         Status = ocorrencia.Status
@@ -147,15 +149,19 @@ app.MapPut("/ocorrencia/atualizar", (HelpTechContext context, OcorrenciaAtualiza
     .WithTags("Ocorrencias");
 ////.RequireAuthorization();
 
-app.MapPut("/ocorrencia/encerrar", (HelpTechContext context, OcorrenciaEncerrarRequest ocorrenciaEncerrarRequest) =>
+app.MapPut("/ocorrencia/encerrar", (HelpTechContext context, ClaimsPrincipal user, OcorrenciaEncerrarRequest ocorrenciaEncerrarRequest) =>
 {
     try
     {
+        var usuarioIdLogado = user.Identities.First().Claims.FirstOrDefault();
+        if (usuarioIdLogado == null)
+            return Results.BadRequest("Usuário não Localizado no Token.");
+
         var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaEncerrarRequest.Id);
         if (ocorrencia is null)
             return Results.BadRequest("Ocorrencia não Localizada.");
 
-        ocorrencia.Encerrar(ocorrenciaEncerrarRequest.DescricaoResolucao, Guid.NewGuid());
+        ocorrencia.Encerrar(ocorrenciaEncerrarRequest.DescricaoResolucao, Guid.Parse(usuarioIdLogado.Value));
         context.OcorrenciaSet.Update(ocorrencia);
         context.SaveChanges();
 
