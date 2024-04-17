@@ -14,10 +14,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -32,13 +29,6 @@ builder.Services.ConfigureAuthenticateSwagger();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
-
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -46,28 +36,27 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
 
-
-
-
 #region Endpoints de Ocorrencia
-app.MapGet("/ocorrencia", (HelpTechContext context) =>
+app.MapGet("/ocorrencia/listar", (HelpTechContext context) =>
 {
     var ocorrencias = context.OcorrenciaSet.Select(ocorrencia => new OcorrenciaListarResponse
     {
         Id = ocorrencia.Id,
+        UsuarioNome = ocorrencia.Usuario.Nome,
         Descricao = ocorrencia.Descricao,
-        TipoOcorrencia = ocorrencia.TipoOcorrencia
+        TipoOcorrencia = ocorrencia.TipoOcorrencia,
+        Status = ocorrencia.Status
     });
 
     return Results.Ok(ocorrencias);
 })
-    .WithOpenApi(operation =>
-    {
-        operation.Description = "Endpoint para obter todas as ocorrencias cadastradas";
-        operation.Summary = "Listar todas as Ocorrencias";
-        return operation;
-    })
-    .WithTags("Ocorrencias");
+.WithOpenApi(operation =>
+{
+    operation.Description = "Endpoint para obter todas as ocorrencias cadastradas";
+    operation.Summary = "Listar todas as Ocorrencias";
+    return operation;
+})
+.WithTags("Ocorrencias");
 ////.RequireAuthorization();
 
 app.MapGet("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorrenciaId) =>
@@ -79,8 +68,11 @@ app.MapGet("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorrenc
     var ocorrenciaDto = new OcorrenciaObterResponse
     {
         Id = ocorrencia.Id,
+        UsuarioId = ocorrencia.UsuarioId,
         Descricao = ocorrencia.Descricao,
-        TipoOcorrencia = ocorrencia.TipoOcorrencia
+        TipoOcorrencia = ocorrencia.TipoOcorrencia,
+        DataHora = ocorrencia.DataHora,
+        Status = ocorrencia.Status
     };
 
     return Results.Ok(ocorrenciaDto);
@@ -95,12 +87,19 @@ app.MapGet("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorrenc
     .WithTags("Ocorrencias");
 ////.RequireAuthorization();
 
-app.MapPost("/ocorrencia", (HelpTechContext context, OcorrenciaAdicionarRequest ocorrenciaAdicionarRequest) =>
+app.MapPost("/ocorrencia/adicionar", (HelpTechContext context, ClaimsPrincipal user, OcorrenciaAdicionarRequest ocorrenciaAdicionarRequest) =>
 {
     try
     {
-        var ocorrencia = new Ocorrencia(ocorrenciaAdicionarRequest.Descricao, ocorrenciaAdicionarRequest.TipoOcorrencia);
+        var usuarioIdLogado = user.Identities.First().Claims.FirstOrDefault();
+        if (usuarioIdLogado == null)
+            return Results.BadRequest("Usuário não Localizado no Token.");
 
+        var ocorrencia = new Ocorrencia(
+            ocorrenciaAdicionarRequest.Descricao,
+            ocorrenciaAdicionarRequest.TipoOcorrencia,
+            Guid.Parse(usuarioIdLogado.Value));
+            
         context.OcorrenciaSet.Add(ocorrencia);
         context.SaveChanges();
 
@@ -120,7 +119,7 @@ app.MapPost("/ocorrencia", (HelpTechContext context, OcorrenciaAdicionarRequest 
     .WithTags("Ocorrencias");
 ////.RequireAuthorization();
 
-app.MapPut("/ocorrencia", (HelpTechContext context, OcorrenciaAtualizarRequest ocorrenciaAtualizarRequest) =>
+app.MapPut("/ocorrencia/atualizar", (HelpTechContext context, OcorrenciaAtualizarRequest ocorrenciaAtualizarRequest) =>
 {
     try
     {
@@ -148,18 +147,19 @@ app.MapPut("/ocorrencia", (HelpTechContext context, OcorrenciaAtualizarRequest o
     .WithTags("Ocorrencias");
 ////.RequireAuthorization();
 
-app.MapDelete("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorrenciaId) =>
+app.MapPut("/ocorrencia/encerrar", (HelpTechContext context, OcorrenciaEncerrarRequest ocorrenciaEncerrarRequest) =>
 {
     try
     {
-        var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaId);
+        var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaEncerrarRequest.Id);
         if (ocorrencia is null)
             return Results.BadRequest("Ocorrencia não Localizada.");
 
-        context.OcorrenciaSet.Remove(ocorrencia);
+        ocorrencia.Encerrar(ocorrenciaEncerrarRequest.DescricaoResolucao, Guid.NewGuid());
+        context.OcorrenciaSet.Update(ocorrencia);
         context.SaveChanges();
 
-        return Results.Ok("Ocorrencia Removida com Sucesso.");
+        return Results.Ok("Ocorrencia Encerrada com Sucesso.");
     }
     catch (Exception ex)
     {
@@ -168,9 +168,36 @@ app.MapDelete("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorr
 })
     .WithOpenApi(operation =>
     {
-        operation.Description = "Endpoint para Excluir uma Ocorrencia";
-        operation.Summary = "Excluir Ocorrencia";
-        operation.Parameters[0].Description = "Id da Ocorrencia";
+        operation.Description = "Endpoint para Encerrar uma Ocorrencia";
+        operation.Summary = "Encerrar Ocorrencia";
+        return operation;
+    })
+    .WithTags("Ocorrencias");
+////.RequireAuthorization();
+
+app.MapPut("/ocorrencia/iniciar-atendimento", (HelpTechContext context, OcorrenciaIniciarAtendimentoRequest ocorrenciaIniciarAtendimentoRequest) =>
+{
+    try
+    {
+        var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaIniciarAtendimentoRequest.Id);
+        if (ocorrencia is null)
+            return Results.BadRequest("Ocorrencia não Localizada.");
+
+        ocorrencia.IniciarAtendimento();
+        context.OcorrenciaSet.Update(ocorrencia);
+        context.SaveChanges();
+
+        return Results.Ok("Ocorrencia Iniciada com Sucesso.");
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(ex.InnerException?.Message ?? ex.Message);
+    }
+})
+    .WithOpenApi(operation =>
+    {
+        operation.Description = "Endpoint para Iniciar Atendimento a uma Ocorrencia";
+        operation.Summary = "Iniciar uma Ocorrencia";
         return operation;
     })
     .WithTags("Ocorrencias");
@@ -178,11 +205,11 @@ app.MapDelete("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorr
 
 #endregion
 
-#region Endpoints de Usu�rios
+#region Endpoints de Usuários
 
-app.MapGet("/usuario", (HelpTechContext context) =>
+app.MapGet("/usuario/listar", (HelpTechContext context) =>
 {
-    var usuarios = context.UsuariosSet.Select(usuario => new UsuarioListarResponse
+    var usuarios = context.UsuarioSet.Select(usuario => new UsuarioListarResponse
     {
         Id = usuario.Id,
         Nome = usuario.Nome
@@ -192,18 +219,18 @@ app.MapGet("/usuario", (HelpTechContext context) =>
 })
     .WithOpenApi(operation =>
     {
-        operation.Description = "Endpoint para obter todos os usu�rios cadastrados";
-        operation.Summary = "Listar todos os Usu�rios";
+        operation.Description = "Endpoint para obter todos os usuários cadastrados";
+        operation.Summary = "Listar todos os Usuários";
         return operation;
     })
-    .WithTags("Usu�rios");
+    .WithTags("Usuários");
     //.RequireAuthorization();
 
 app.MapGet("/usuario/{usuarioId}", (HelpTechContext context, Guid usuarioId) =>
 {
-    var usuario = context.UsuariosSet.Find(usuarioId);
+    var usuario = context.UsuarioSet.Find(usuarioId);
     if (usuario is null)
-        return Results.BadRequest("Usu�rio n�o Localizado.");
+        return Results.BadRequest("Usuário não Localizado.");
 
     var usuarioDto = new UsuarioObterResponse
     {
@@ -216,36 +243,36 @@ app.MapGet("/usuario/{usuarioId}", (HelpTechContext context, Guid usuarioId) =>
 })
     .WithOpenApi(operation =>
     {
-        operation.Description = "Endpoint para obter um usu�rio com base no ID informado";
-        operation.Summary = "Obter um Usu�rio";
-        operation.Parameters[0].Description = "Id do Usu�rio";
+        operation.Description = "Endpoint para obter um usuário com base no ID informado";
+        operation.Summary = "Obter um Usuário";
+        operation.Parameters[0].Description = "Id do Usuário";
         return operation;
     })
-    .WithTags("Usu�rios");
+    .WithTags("Usuários");
     //.RequireAuthorization();
 
-app.MapPost("/usuario", (HelpTechContext context, UsuarioAdicionarRequest usuarioAdicionarRequest) =>
+app.MapPost("/usuario/adicionar", (HelpTechContext context, UsuarioAdicionarRequest usuarioAdicionarRequest) =>
 {
     try
     {
         if (usuarioAdicionarRequest.EmailLogin != usuarioAdicionarRequest.EmailLoginConfirmacao)
-            return Results.BadRequest("Email de Login n�o Confere.");
+            return Results.BadRequest("Email de Login não Confere.");
 
         if (usuarioAdicionarRequest.Senha != usuarioAdicionarRequest.SenhaConfirmacao)
-            return Results.BadRequest("Senha n�o Confere.");
+            return Results.BadRequest("Senha não Confere.");
 
-        if (context.UsuariosSet.Any(p => p.EmailLogin == usuarioAdicionarRequest.EmailLogin))
-            return Results.BadRequest("Email j� utilizado para Login em outro Usu�rio.");
+        if (context.UsuarioSet.Any(p => p.EmailLogin == usuarioAdicionarRequest.EmailLogin))
+            return Results.BadRequest("Email já utilizado para Login em outro Usuário.");
 
         var usuario = new Usuario(
             usuarioAdicionarRequest.Nome,
             usuarioAdicionarRequest.EmailLogin,
             usuarioAdicionarRequest.Senha.EncryptPassword());
 
-        context.UsuariosSet.Add(usuario);
+        context.UsuarioSet.Add(usuario);
         context.SaveChanges();
 
-        return Results.Created("Created", $"Usu�rio Registrado com Sucesso. {usuario.Id}");
+        return Results.Created("Created", $"Usuário Registrado com Sucesso. {usuario.Id}");
     }
     catch (Exception ex)
     {
@@ -254,31 +281,31 @@ app.MapPost("/usuario", (HelpTechContext context, UsuarioAdicionarRequest usuari
 })
     .WithOpenApi(operation =>
     {
-        operation.Description = "Endpoint para Cadastrar um Usu�rio";
-        operation.Summary = "Novo Usu�rio";
+        operation.Description = "Endpoint para Cadastrar um Usuário";
+        operation.Summary = "Novo Usuário";
         return operation;
     })
-    .WithTags("Usu�rios");
+    .WithTags("Usuários");
     //.RequireAuthorization();
 
 app.MapPut("/usuario/alterar-senha", (HelpTechContext context, UsuarioAtualizarRequest usuarioAtualizarRequest) =>
 {
     try
     {
-        var usuario = context.UsuariosSet.Find(usuarioAtualizarRequest.Id);
+        var usuario = context.UsuarioSet.Find(usuarioAtualizarRequest.UsuarioId);
         if (usuario is null)
-            return Results.BadRequest("Usu�rio n�o Localizado");
+            return Results.BadRequest("Usuário não Localizado.");
 
         if (usuarioAtualizarRequest.SenhaAtual.EncryptPassword() == usuario.Senha)
         {
             usuario.AlterarSenha(usuarioAtualizarRequest.SenhaNova.EncryptPassword());
-            context.UsuariosSet.Update(usuario);
+            context.UsuarioSet.Update(usuario);
             context.SaveChanges();
 
             return Results.Ok("Senha Alterada com Sucesso.");
         }
 
-        return Results.BadRequest("Ocorreu um Problema ao Alterar a Senha do Usu�rio.");
+        return Results.BadRequest("Ocorreu um Problema ao Alterar a Senha do Usuário.");
     }
     catch (Exception ex)
     {
@@ -287,23 +314,22 @@ app.MapPut("/usuario/alterar-senha", (HelpTechContext context, UsuarioAtualizarR
 })
     .WithOpenApi(operation =>
     {
-        operation.Description = "Endpoint para Alterar a Senha do Usu�rio";
+        operation.Description = "Endpoint para Alterar a Senha do Usuário";
         operation.Summary = "Alterar Senha";
         return operation;
     })
-    .WithTags("Usu�rios");
+    .WithTags("Usuários");
 //.RequireAuthorization();
 
 #endregion
-
 
 #region Autenticação
 
 app.MapPost("/autenticar", (HelpTechContext context, UsuarioAutenticarRequest usuarioAutenticarRequest) =>
 {
-    var usuario = context.UsuariosSet.FirstOrDefault(p => p.EmailLogin == usuarioAutenticarRequest.EmailLogin && p.Senha == usuarioAutenticarRequest.Senha.EncryptPassword());
+    var usuario = context.UsuarioSet.FirstOrDefault(p => p.EmailLogin == usuarioAutenticarRequest.EmailLogin && p.Senha == usuarioAutenticarRequest.Senha.EncryptPassword());
     if (usuario is null)
-        return Results.BadRequest("N�o foi Poss�vel Efetuar o Login.");
+        return Results.BadRequest("Não foi Possível Efetuar o Login.");
 
     var claims = new[]
     {
@@ -311,9 +337,9 @@ app.MapPost("/autenticar", (HelpTechContext context, UsuarioAutenticarRequest us
             new Claim(ClaimTypes.Name, usuario.Nome)
         };
 
-    //Recebe uma inst�ncia da Classe SymmetricSecurityKey
-    //armazenando a chave de criptografia usada na cria��o do Token
-    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("{ccdc511d-23f0-4a30-995e-ebc3658e901d}"));
+    //Recebe uma instância da Classe SymmetricSecurityKey
+    //armazenando a chave de criptografia usada na criação do Token
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("{469e8343-8fa6-42b9-9553-2f6e182c21fa}"));
 
     //Recebe um objeto do tipo SigninCredentials contendo a chave de
     //criptografia e o algoritimo de seguran�a empregados na gera��o
@@ -321,8 +347,8 @@ app.MapPost("/autenticar", (HelpTechContext context, UsuarioAutenticarRequest us
     var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
     var token = new JwtSecurityToken(
-        issuer: "etec.pwIII",
-        audience: "etec.pwIII",
+        issuer: "help.tech",
+        audience: "help.tech",
         claims: claims,
         expires: DateTime.Now.AddDays(1),
         signingCredentials: creds
@@ -337,8 +363,8 @@ app.MapPost("/autenticar", (HelpTechContext context, UsuarioAutenticarRequest us
 })
     .WithOpenApi(operation =>
     {
-        operation.Description = "Endpoint para Autenticar um Usuario na API";
-        operation.Summary = "Autenticar Usuario";
+        operation.Description = "Endpoint para Autenticar um Usuário na API";
+        operation.Summary = "Autenticar Usuário";
         return operation;
     })
     .WithTags("Segurança");

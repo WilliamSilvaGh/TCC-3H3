@@ -20,4 +20,8 @@
     <ProjectReference Include="..\HelpTech.Domain\HelpTech.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

@@ -28,17 +28,35 @@ namespace HelpTech.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<DateTime>("DataHora")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Descricao")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("varchar(1000)");
 
-                    b.Property<string>("TipoOcorrencia")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                    b.Property<string>("DescricaoResolucao")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TipoOcorrencia")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioResolucaoId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("UsuarioResolucaoId");
 
                     b.ToTable("TB_Ocorrencia", (string)null);
                 });
@@ -67,6 +85,23 @@ namespace HelpTech.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TB_Usuario", (string)null);
+                });
+
+            modelBuilder.Entity("HelpTech.Domain.Entities.Ocorrencia", b =>
+                {
+                    b.HasOne("HelpTech.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HelpTech.Domain.Entities.Usuario", "UsuarioResolucao")
+                        .WithMany()
+                        .HasForeignKey("UsuarioResolucaoId");
+
+                    b.Navigation("Usuario");
+
+                    b.Navigation("UsuarioResolucao");
                 });
 #pragma warning restore 612, 618
         }

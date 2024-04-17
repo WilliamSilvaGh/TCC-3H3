@@ -1,9 +1,5 @@
 ﻿using HelpTech.Domain.Entities.Base;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using HelpTech.Domain.Enumerators;
 
 namespace HelpTech.Domain.Entities
 {
@@ -11,22 +7,53 @@ namespace HelpTech.Domain.Entities
     {
         public string Descricao { get; set; }
 
-        public string TipoOcorrencia { get; set; }
+        public EnumTipoOcorrencia TipoOcorrencia { get; set; }
+
+        public DateTime DataHora { get; set; }
+
+        public EnumStatus Status { get; set; }
+
+        public string DescricaoResolucao { get; set; }
+
+        public Guid UsuarioId { get; set; }
+
+        public Guid? UsuarioResolucaoId { get; set; }
+
+        public virtual Usuario Usuario { get; set; }
+
+        public virtual Usuario UsuarioResolucao { get; set; }
 
         protected Ocorrencia() {}
 
-        public Ocorrencia( string descricao, string tipoOcorrencia)
+        public Ocorrencia(
+            string descricao,
+            EnumTipoOcorrencia tipoOcorrencia,
+            Guid usuarioId)
         {
             Id = Guid.NewGuid();
             Descricao = descricao;
             TipoOcorrencia = tipoOcorrencia;
-
+            DataHora = DateTime.Now;
+            Status = EnumStatus.AFazer;
+            UsuarioId = usuarioId;
         }
 
-        public void Atualizar(string descricao, string tipoOcorrencia)
+        public void Atualizar(string descricao, EnumTipoOcorrencia tipoOcorrencia)
         {
             Descricao = descricao;
             TipoOcorrencia = tipoOcorrencia;
+        }
+
+        public void IniciarAtendimento()
+        {
+            Status = EnumStatus.EmAndamento;
+        }
+
+        public void Encerrar(string descricaoResolucao, Guid usuarioResolucaoId)
+        {
+            DescricaoResolucao = descricaoResolucao;
+            UsuarioResolucaoId = usuarioResolucaoId;
+            Status = EnumStatus.Concluido;
         }
     }
 }

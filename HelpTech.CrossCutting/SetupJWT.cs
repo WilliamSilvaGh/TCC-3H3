@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HelpTech.CrossCutting
 {
@@ -22,9 +18,9 @@ namespace HelpTech.CrossCutting
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        ValidIssuer = "etec.pwIII",
-                        ValidAudience = "etec.pwIII",
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("{ccdc511d-23f0-4a30-995e-ebc3658e901d}"))
+                        ValidIssuer = "help.tech",
+                        ValidAudience = "help.tech",
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("{469e8343-8fa6-42b9-9553-2f6e182c21fa}"))
                     };
                 });
         }

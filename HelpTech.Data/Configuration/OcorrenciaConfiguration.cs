@@ -16,8 +16,23 @@ namespace HelpTech.Data.Configuration
                 .IsRequired();
 
             builder.Property(p => p.TipoOcorrencia)
-                .HasMaxLength(50)
                 .IsRequired();
+
+            builder.Property(p => p.DataHora)
+                .IsRequired();
+
+            builder.Property(p => p.Status)
+                .IsRequired();
+
+            builder.Property(p => p.DescricaoResolucao)
+                .HasMaxLength(1000)
+                .IsRequired(false);
+
+            builder.Property(p => p.UsuarioId)
+                .IsRequired();
+
+            builder.Property(p => p.UsuarioResolucaoId)
+                .IsRequired(false);
 
             builder.ToTable("TB_Ocorrencia");
         }
