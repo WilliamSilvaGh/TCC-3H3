@@ -7,5 +7,6 @@
         public string EmailLoginConfirmacao { get; set; }
         public string Senha { get; set; }
         public string SenhaConfirmacao { get; set; }
+        public bool EhAdmin { get; set; }
     }
 }

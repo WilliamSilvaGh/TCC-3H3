@@ -7,7 +7,7 @@ namespace HelpTech.Domain.DTOs.Ocorrencia.Request
     {
         public string Descricao { get; set; }
 
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        //[JsonConverter(typeof(JsonStringEnumConverter))]
         public EnumTipoOcorrencia TipoOcorrencia { get; set; }
     }
 }

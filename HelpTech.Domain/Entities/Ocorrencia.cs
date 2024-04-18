@@ -47,6 +47,13 @@ namespace HelpTech.Domain.Entities
             TipoOcorrencia = tipoOcorrencia;
         }
 
+        public void Atualizar(string descricao, EnumTipoOcorrencia tipoOcorrencia, EnumStatus status)
+        {
+            Descricao = descricao;
+            TipoOcorrencia = tipoOcorrencia;
+            Status = status;
+        }
+
         public void IniciarAtendimento()
         {
             Status = EnumStatus.EmAndamento;

@@ -4,6 +4,7 @@ using HelpTech.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HelpTech.Data.Migrations
 {
     [DbContext(typeof(HelpTechContext))]
-    partial class HelpTechContextModelSnapshot : ModelSnapshot
+    [Migration("20240417222350_AdicionarPropriedade_EhAdmin_TabelaUsuario")]
+    partial class AdicionarPropriedade_EhAdmin_TabelaUsuario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

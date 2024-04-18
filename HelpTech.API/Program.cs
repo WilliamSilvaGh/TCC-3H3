@@ -13,6 +13,8 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
+Guid usuarioLogadoId;
+bool usuarioLogadoEhAdmin;
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -22,7 +24,12 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddDbContext<HelpTechContext>();
-builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+//builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 builder.Services.ConfigureAuthentication();
 builder.Services.ConfigureAuthenticateSwagger();
@@ -37,19 +44,46 @@ app.UseAuthorization();
 app.UseHttpsRedirection();
 
 #region Endpoints de Ocorrencia
-app.MapGet("/ocorrencia/listar", (HelpTechContext context) =>
+app.MapGet("/ocorrencia/listar", (HelpTechContext context, ClaimsPrincipal user) =>
 {
-    var ocorrencias = context.OcorrenciaSet.Select(ocorrencia => new OcorrenciaListarResponse
+    try
     {
-        Id = ocorrencia.Id,
-        UsuarioNome = ocorrencia.Usuario.Nome,
-        Descricao = ocorrencia.Descricao,
-        DescricaoResolucao = ocorrencia.DescricaoResolucao,
-        TipoOcorrencia = ocorrencia.TipoOcorrencia,
-        Status = ocorrencia.Status
-    });
+        SetarDadosToken(user);
 
-    return Results.Ok(ocorrencias);
+        if (usuarioLogadoEhAdmin)
+        {
+            var ocorrenciasAdmin = context.OcorrenciaSet.Select(ocorrencia => new OcorrenciaListarResponse
+            {
+                Id = ocorrencia.Id,
+                UsuarioNome = ocorrencia.Usuario.Nome,
+                Descricao = ocorrencia.Descricao,
+                DescricaoResolucao = ocorrencia.DescricaoResolucao,
+                TipoOcorrencia = ocorrencia.TipoOcorrencia,
+                Status = ocorrencia.Status
+            });
+
+            return Results.Ok(ocorrenciasAdmin);
+        }
+
+        var ocorrencias = context.OcorrenciaSet.Where(p => p.UsuarioId == usuarioLogadoId).Select(ocorrencia => new OcorrenciaListarResponse
+        {
+            Id = ocorrencia.Id,
+            UsuarioNome = ocorrencia.Usuario.Nome,
+            Descricao = ocorrencia.Descricao,
+            DescricaoResolucao = ocorrencia.DescricaoResolucao,
+            TipoOcorrencia = ocorrencia.TipoOcorrencia,
+            Status = ocorrencia.Status
+        }
+        );
+
+        return Results.Ok(ocorrencias);
+
+    }
+    catch
+    {
+        return Results.BadRequest("Ocorreu um problema! Verifique se está logado!");
+    }
+
 })
 .WithOpenApi(operation =>
 {
@@ -58,6 +92,7 @@ app.MapGet("/ocorrencia/listar", (HelpTechContext context) =>
     return operation;
 })
 .WithTags("Ocorrencias");
+
 ////.RequireAuthorization();
 
 app.MapGet("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorrenciaId) =>
@@ -91,16 +126,18 @@ app.MapGet("/ocorrencia/{ocorrenciaId}", (HelpTechContext context, Guid ocorrenc
 
 app.MapPost("/ocorrencia/adicionar", (HelpTechContext context, ClaimsPrincipal user, OcorrenciaAdicionarRequest ocorrenciaAdicionarRequest) =>
 {
+if (user?.Identity?.IsAuthenticated != true)
+        return Results.BadRequest("Logue antes de adicionar uma ocorrência");
+
     try
     {
-        var usuarioIdLogado = user.Identities.First().Claims.FirstOrDefault();
-        if (usuarioIdLogado == null)
-            return Results.BadRequest("Usuário não Localizado no Token.");
+        SetarDadosToken(user);
+
 
         var ocorrencia = new Ocorrencia(
             ocorrenciaAdicionarRequest.Descricao,
             ocorrenciaAdicionarRequest.TipoOcorrencia,
-            Guid.Parse(usuarioIdLogado.Value));
+            usuarioLogadoId);
             
         context.OcorrenciaSet.Add(ocorrencia);
         context.SaveChanges();
@@ -121,13 +158,22 @@ app.MapPost("/ocorrencia/adicionar", (HelpTechContext context, ClaimsPrincipal u
     .WithTags("Ocorrencias");
 ////.RequireAuthorization();
 
-app.MapPut("/ocorrencia/atualizar", (HelpTechContext context, OcorrenciaAtualizarRequest ocorrenciaAtualizarRequest) =>
+app.MapPut("/ocorrencia/atualizar", (HelpTechContext context, ClaimsPrincipal user, OcorrenciaAtualizarRequest ocorrenciaAtualizarRequest) =>
 {
     try
     {
+        SetarDadosToken(user);
+
         var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaAtualizarRequest.Id);
         if (ocorrencia is null)
             return Results.BadRequest("Ocorrencia não Localizada.");
+
+        if (usuarioLogadoEhAdmin)
+        {
+        ocorrencia.Atualizar(ocorrenciaAtualizarRequest.Descricao, ocorrenciaAtualizarRequest.TipoOcorrencia, ocorrenciaAtualizarRequest.Status);
+        context.OcorrenciaSet.Update(ocorrencia);
+        context.SaveChanges();
+        }
 
         ocorrencia.Atualizar(ocorrenciaAtualizarRequest.Descricao, ocorrenciaAtualizarRequest.TipoOcorrencia);
         context.OcorrenciaSet.Update(ocorrencia);
@@ -153,19 +199,20 @@ app.MapPut("/ocorrencia/encerrar", (HelpTechContext context, ClaimsPrincipal use
 {
     try
     {
-        var usuarioIdLogado = user.Identities.First().Claims.FirstOrDefault();
-        if (usuarioIdLogado == null)
-            return Results.BadRequest("Usuário não Localizado no Token.");
+        SetarDadosToken(user);
+        if (usuarioLogadoEhAdmin)
+        {
+            var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaEncerrarRequest.Id);
+            if (ocorrencia is null)
+                return Results.BadRequest("Ocorrencia não Localizada.");
 
-        var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaEncerrarRequest.Id);
-        if (ocorrencia is null)
-            return Results.BadRequest("Ocorrencia não Localizada.");
+            ocorrencia.Encerrar(ocorrenciaEncerrarRequest.DescricaoResolucao, usuarioLogadoId);
+            context.OcorrenciaSet.Update(ocorrencia);
+            context.SaveChanges();
 
-        ocorrencia.Encerrar(ocorrenciaEncerrarRequest.DescricaoResolucao, Guid.Parse(usuarioIdLogado.Value));
-        context.OcorrenciaSet.Update(ocorrencia);
-        context.SaveChanges();
-
-        return Results.Ok("Ocorrencia Encerrada com Sucesso.");
+            return Results.Ok("Ocorrencia Encerrada com Sucesso.");
+        }
+        return Results.BadRequest("Usuário não permitido");
     }
     catch (Exception ex)
     {
@@ -181,19 +228,27 @@ app.MapPut("/ocorrencia/encerrar", (HelpTechContext context, ClaimsPrincipal use
     .WithTags("Ocorrencias");
 ////.RequireAuthorization();
 
-app.MapPut("/ocorrencia/iniciar-atendimento", (HelpTechContext context, OcorrenciaIniciarAtendimentoRequest ocorrenciaIniciarAtendimentoRequest) =>
+app.MapPut("/ocorrencia/iniciar-atendimento", (HelpTechContext context, ClaimsPrincipal user, OcorrenciaIniciarAtendimentoRequest ocorrenciaIniciarAtendimentoRequest) =>
 {
     try
     {
-        var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaIniciarAtendimentoRequest.Id);
+        SetarDadosToken(user);
+
+        if (usuarioLogadoEhAdmin)
+        {
+            var ocorrencia = context.OcorrenciaSet.Find(ocorrenciaIniciarAtendimentoRequest.Id);
         if (ocorrencia is null)
             return Results.BadRequest("Ocorrencia não Localizada.");
 
-        ocorrencia.IniciarAtendimento();
-        context.OcorrenciaSet.Update(ocorrencia);
-        context.SaveChanges();
+            ocorrencia.IniciarAtendimento();
+            context.OcorrenciaSet.Update(ocorrencia);
+            context.SaveChanges();
 
-        return Results.Ok("Ocorrencia Iniciada com Sucesso.");
+            return Results.Ok("Ocorrencia Iniciada com Sucesso.");
+        }
+
+        return Results.BadRequest("Usuário não permitido!");
+        
     }
     catch (Exception ex)
     {
@@ -218,7 +273,8 @@ app.MapGet("/usuario/listar", (HelpTechContext context) =>
     var usuarios = context.UsuarioSet.Select(usuario => new UsuarioListarResponse
     {
         Id = usuario.Id,
-        Nome = usuario.Nome
+        Nome = usuario.Nome,
+        EhAdmin = usuario.EhAdmin
     });
 
     return Results.Ok(usuarios);
@@ -242,7 +298,8 @@ app.MapGet("/usuario/{usuarioId}", (HelpTechContext context, Guid usuarioId) =>
     {
         Id = usuario.Id,
         Nome = usuario.Nome,
-        EmailLogin = usuario.EmailLogin
+        EmailLogin = usuario.EmailLogin,
+        EhAdmin = usuario.EhAdmin
     };
 
     return Results.Ok(usuarioDto);
@@ -273,7 +330,8 @@ app.MapPost("/usuario/adicionar", (HelpTechContext context, UsuarioAdicionarRequ
         var usuario = new Usuario(
             usuarioAdicionarRequest.Nome,
             usuarioAdicionarRequest.EmailLogin,
-            usuarioAdicionarRequest.Senha.EncryptPassword());
+            usuarioAdicionarRequest.Senha.EncryptPassword(),
+            usuarioAdicionarRequest.EhAdmin);
 
         context.UsuarioSet.Add(usuario);
         context.SaveChanges();
@@ -340,7 +398,8 @@ app.MapPost("/autenticar", (HelpTechContext context, UsuarioAutenticarRequest us
     var claims = new[]
     {
             new Claim("UsuarioId", usuario.Id.ToString()),
-            new Claim(ClaimTypes.Name, usuario.Nome)
+            new Claim(ClaimTypes.Name, usuario.Nome),
+            new Claim("EhAdmin", usuario.EhAdmin ? "S" : "N")
         };
 
     //Recebe uma instância da Classe SymmetricSecurityKey
@@ -380,3 +439,13 @@ app.MapPost("/autenticar", (HelpTechContext context, UsuarioAutenticarRequest us
 app.MapControllers();
 
 app.Run();
+
+#region Métodos de Apoio
+
+void SetarDadosToken(ClaimsPrincipal user)
+{
+    usuarioLogadoId = Guid.Parse(user.Identities.First().Claims.ToList()[0].Value);
+    usuarioLogadoEhAdmin = user.Identities.First().Claims.ToList()[2].Value == "S";
+}
+
+#endregion
