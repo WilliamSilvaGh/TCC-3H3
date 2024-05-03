@@ -68,15 +68,15 @@
         line-height: 3rem;
     }
 
-        .nav-item ::deep a.active {
-            background-color: rgba(255,255,255,0.37);
-            color: white;
-        }
+    .nav-item.active ::deep a { /* Seleciona somente a tag a do item de navegação ativo */
+        background-color: rgba(255,255,255,0.37);
+        color: white;
+    }
 
-        .nav-item ::deep a:hover {
-            background-color: rgba(255,255,255,0.1);
-            color: white;
-        }
+    .nav-item ::deep a:hover { /* Mantém o efeito hover para links não ativos */
+        background-color: rgba(255,255,255,0.1);
+        color: white;
+    }
 
 .nav-scrollable {
     display: none;

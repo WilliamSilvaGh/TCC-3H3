@@ -1,0 +1,59 @@
+﻿@page "/"
+
+@using HelpTech.Domain.DTOs.Usuario.Request
+@using HelpTech.Domain.DTOs.Usuario.Response
+@using System.Text.Json
+
+<RadzenTemplateForm TItem="UsuarioAutenticarRequest" Data="@usuarioAutenticarRequest" Submit="@Autenticar">
+    <RadzenRow AlignItems="AlignItems.End" Wrap="FlexWrap.Wrap" Gap="1rem" Class="rz-p-sm-12">
+        <RadzenColumn>
+            <h1>Login</h1>
+            <p>Não tem uma conta? <RadzenLink Path="cadastro" Text="Cadastre-se aqui." /></p>
+
+            @* <div class="rz-p-sm-12 rz-text-align-center">
+            <RadzenLabel Text="Select Value" Component="DropDownBindValue" Style="margin-right: 8px; vertical-align: middle;" />
+            <RadzenDropDown @bind-Value=@value Data=@companyNames Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
+            </div> *@
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <RadzenFormField Text="E-mail institucional" Variant="Variant.Text" Style="width: 100%;">
+                    <RadzenTextBox Style="width: 100%;" @bind-Value="usuarioAutenticarRequest.EmailLogin" Name="EmailLogin" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="EmailLogin" Text="Email é Obrigatório" />
+            </RadzenColumn>
+
+            @* @bind-Value="@value" *@
+            @* Variant="@variant" *@
+            <RadzenFormField Text="Senha" Style="width: 100%;">
+                <RadzenPassword @bind-Value="usuarioAutenticarRequest.Senha" Name="Senha" />
+            </RadzenFormField>
+
+            <RadzenFormField Variant="Variant.Text" Style="width: 100%;">
+                <RadzenButton ButtonType="ButtonType.Submit" Shade="Shade.Lighter" Text="Entrar" ButtonStyle="ButtonStyle.Light" />
+            </RadzenFormField>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenTemplateForm>
+
+@code {
+    UsuarioAutenticarRequest usuarioAutenticarRequest = new UsuarioAutenticarRequest();
+
+    private async void Autenticar()
+    {
+        var response = await HttpClient.PostAsJsonAsync("autenticar", usuarioAutenticarRequest);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var usuarioAutenticarResponse = JsonSerializer.Deserialize<UsuarioAutenticarResponse>(content, options);
+
+            HttpClient.DefaultRequestHeaders.Clear();
+            HttpClient.DefaultRequestHeaders.Add("authorization", $"bearer {usuarioAutenticarResponse.AccessToken}");
+
+            NavigationManager.NavigateTo("/home");
+        }
+    }
+}
+

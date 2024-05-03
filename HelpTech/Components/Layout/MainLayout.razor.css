@@ -1,18 +1,32 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 .page {
     position: relative;
     display: flex;
     flex-direction: column;
+    background-color: black;
+    min-height: 100vh; /* Defina uma altura mínima de 100% da altura da viewport */
+}
+
+body {
+    overflow-x: hidden; /* Impede o overflow horizontal */
 }
 
 main {
     color: white;
     flex: 1;
     background-color: black;
+    width: 100%;
     opacity: 95%;
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, #C21616, black);
+    /*background-image: linear-gradient(180deg, #C21616, black);*/
+    background-image: linear-gradient(180deg, #00bfff, black);
 }
 
 .top-row {

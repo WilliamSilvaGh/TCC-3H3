@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Logging;
+using Radzen;
 
 namespace HelpTech
 {
@@ -15,9 +17,14 @@ namespace HelpTech
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddScoped(httpClient => new HttpClient {
+                BaseAddress = new Uri("https://localhost:7219")
+            });
+            builder.Services.AddScoped<DialogService>();
+            builder.Services.AddScoped<NotificationService>();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
 

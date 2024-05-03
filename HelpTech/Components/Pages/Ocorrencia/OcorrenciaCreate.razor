@@ -1,0 +1,56 @@
+﻿@page "/ocorrencia/create"
+@using HelpTech.Domain.DTOs.Ocorrencia.Request
+@using HelpTech.Domain.Enumerators
+
+<RadzenTemplateForm Data="@ocorrenciaAdicionarRequest" Submit="@((OcorrenciaAdicionarRequest args) => { AdicionarOcorrencia(); })">
+<RadzenRow AlignItems="AlignItems.End" Wrap="FlexWrap.Wrap" Gap="1rem" Class="rz-p-sm-12">
+    <RadzenColumn>
+        <h1>Conte para nós</h1>
+        <h4>Preencha as informações referentes ao ocorrido!</h4>
+
+        <RadzenText>Área de Ocorrência</RadzenText>
+            <RadzenDropDown @bind-Value="ocorrenciaAdicionarRequest.TipoOcorrencia">
+                
+            </RadzenDropDown>
+
+        <RadzenText>Descrição da ocorrência</RadzenText>
+            <RadzenTextArea @bind-Value="ocorrenciaAdicionarRequest.Descricao" Placeholder=" Descreva aqui..." class="w-100" aria-label="TextArea with placeholder" />
+
+        <RadzenStack Orientation="Orientation.Horizontal" Style="width: 100%;">
+            <RadzenButton Variant="Variant.Flat" Text="Enviar" ButtonStyle="ButtonStyle.Light" Style="width: 100%;" />
+        </RadzenStack>
+
+    </RadzenColumn>
+
+</RadzenRow>
+    </RadzenTemplateForm>
+
+@code {
+        OcorrenciaAdicionarRequest ocorrenciaAdicionarRequest = new OcorrenciaAdicionarRequest();
+
+        public async void AdicionarOcorrencia()
+        {
+            //https://localhost:7177/categoria
+
+            // var categoriaAdicionarRequestJson = JsonSerializer.Serialize(categoriaAdicionarRequest);
+            // var httpContent = new StringContent(categoriaAdicionarRequestJson, Encoding.UTF8, "application/json");
+            // var response = await HttpClient.PostAsync("categoria", httpContent);
+
+        var response = await HttpClient.PostAsJsonAsync("ocorrencia/adicionar", ocorrenciaAdicionarRequest);
+            if (response.StatusCode == HttpStatusCode.Created)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Sucesso",
+                        Detail = content,
+                        Duration = 4000
+                    });
+
+                NavigationManager.NavigateTo("ocorrencia-list");
+
+            }
+        }
+}

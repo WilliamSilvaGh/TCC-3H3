@@ -9,39 +9,49 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-@*         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div> *@
-        @* <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div> *@
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="login">
+            <NavLink class="nav-link" href="/">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
             </NavLink>
         </div>
-                <div class="nav-item px-3">
-            <NavLink class="nav-link" href="cadastro">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Cadastro
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/home">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="false"></span> Home
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="verifique">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Verifique
+            <NavLink class="nav-link" href="/usuario/create">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="false"></span> Cadastro
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="ocorrencia">
+            <NavLink class="nav-link" href="/ocorrencia/create">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Ocorrencia
             </NavLink>
         </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="quem-somos-nos">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Quem Somos Nós
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Sobre">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Sobre
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/ocorrencia/list">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Listar Ocorrências
+            </NavLink>
+        </div>
+        
     </nav>
 </div>
+
+
+@code{
+
+
+
+
+
+}

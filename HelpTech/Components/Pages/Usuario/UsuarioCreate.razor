@@ -1,0 +1,71 @@
+﻿@page "/usuario/create"
+
+@using HelpTech.Domain.DTOs.Usuario.Request;
+
+<RadzenTemplateForm Data="@usuarioAdicionarRequest" Submit="@((UsuarioAdicionarRequest args) => { AdicionarUsuario(); })">
+    <RadzenRow AlignItems="AlignItems.End" Wrap="FlexWrap.Wrap" Gap="1rem" Class="rz-p-sm-12">
+        <RadzenColumn>
+            <h1>Cadastro</h1>
+            <p>Já tem uma conta? <RadzenLink Path="login" Text="Logue aqui" /></p>
+            <RadzenFormField Text="E-mail institucional" Variant="Variant.Text" Style="width: 100%;">
+                <RadzenTextBox Style="width: 100%;" @bind-Value="usuarioAdicionarRequest.EmailLogin" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="E-mail institucional Confirmação" Variant="Variant.Text" Style="width: 100%;">
+                <RadzenTextBox Style="width: 100%;" @bind-Value="usuarioAdicionarRequest.EmailLoginConfirmacao" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Nome" Variant="Variant.Text" Style="width: 100%;">
+                <RadzenTextBox Style="width: 100%;" @bind-Value="usuarioAdicionarRequest.Nome" />
+            </RadzenFormField>
+
+            @* @bind-Value="@value" *@
+            @* Variant="@variant" *@
+            <RadzenFormField Text="Senha" Style="width: 100%;">
+                <RadzenPassword @bind-Value="usuarioAdicionarRequest.Senha" />
+            </RadzenFormField>
+
+            @* @bind-Value="@value" *@
+            @* Variant="@variant" *@
+            <RadzenFormField Text="Repita sua senha" Style="width: 100%;">
+                <RadzenPassword @bind-Value="usuarioAdicionarRequest.SenhaConfirmacao" />
+            </RadzenFormField>
+
+            <RadzenFormField Variant="Variant.Text" Style="width: 100%;">
+                <RadzenButton ButtonType="ButtonType.Submit" Shade="Shade.Lighter" Text="Cadastrar" ButtonStyle="ButtonStyle.Light" />
+            </RadzenFormField>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenTemplateForm>
+@inherits ComponentBase
+
+@code {
+    UsuarioAdicionarRequest usuarioAdicionarRequest = new UsuarioAdicionarRequest();
+
+    public async void AdicionarUsuario()
+    {
+        //https://localhost:7177/categoria
+
+        // var categoriaAdicionarRequestJson = JsonSerializer.Serialize(categoriaAdicionarRequest);
+        // var httpContent = new StringContent(categoriaAdicionarRequestJson, Encoding.UTF8, "application/json");
+        // var response = await HttpClient.PostAsync("categoria", httpContent);
+
+        var response = await HttpClient.PostAsJsonAsync("usuario/adicionar", usuarioAdicionarRequest);
+        if (response.StatusCode == HttpStatusCode.Created)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Sucesso",
+                    Detail = content,
+                    Duration = 4000
+                });
+
+            NavigationManager.NavigateTo("ocorrencia/list");
+        }
+    }
+
+}

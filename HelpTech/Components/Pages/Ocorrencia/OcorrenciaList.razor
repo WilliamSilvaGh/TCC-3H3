@@ -1,0 +1,60 @@
+﻿@page "/ocorrencia/list"
+@using HelpTech.Domain.DTOs.Ocorrencia.Response
+@using System.Text.Json
+@using System.Net.Http
+@using Microsoft.Extensions.Localization
+@using Radzen
+@using System.Net.Http.Headers;
+@using Microsoft.JSInterop;
+
+<h3>Ocorrencias</h3>
+
+<RadzenNotification />
+<RadzenDialog />
+
+<RadzenAlert Variant="Variant.Filled"
+            AlertStyle="AlertStyle.Primary"
+            Size="AlertSize.Medium"
+            Shade="Shade.Darker"
+            AllowClose="false">
+    Ocorrencias
+</RadzenAlert>
+
+<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="10" AllowPaging="true" IsLoading="@_isLoading" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+            Data="@_listOcorrenciaListarResponse" TItem="OcorrenciaListarResponse" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" GridLines="DataGridGridLines.Both" @ref="_grid">
+    <Columns>
+        <RadzenDataGridColumn TItem="OcorrenciaListarResponse" Property="UsuarioNome" Title="Nome do Usuario" Filterable="true" Sortable="true" />
+        <RadzenDataGridColumn TItem="OcorrenciaListarResponse" Property="TipoOcorrencia" Title="Tipo de Ocorrencia" Filterable="true" Sortable="true" />
+        <RadzenDataGridColumn TItem="OcorrenciaListarResponse" Property="DataHora" Title="Data e Hora" Filterable="true" Sortable="true" />
+        <RadzenDataGridColumn TItem="OcorrenciaListarResponse" Property="Descricao" Title="Descricao" Filterable="true" Sortable="true" />
+        <RadzenDataGridColumn TItem="OcorrenciaListarResponse" Property="DescricaoResolucao" Title="Descricao da Resolucao" Filterable="true" Sortable="true" />
+        <RadzenDataGridColumn TItem="OcorrenciaListarResponse" Property="Status" Title="Status" Filterable="true" Sortable="true" />
+    </Columns>
+</RadzenDataGrid>
+
+@* <LoadingIndicator IsLoading="@_isLoading" />
+ *@
+@code {
+
+    List<OcorrenciaListarResponse> _listOcorrenciaListarResponse = [];
+    RadzenDataGrid<OcorrenciaListarResponse>? _grid;
+    bool _isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        var response = await HttpClient.GetAsync("ocorrencia/listar");
+        if(response.IsSuccessStatusCode){
+            var content = await response.Content.ReadAsStringAsync();
+
+            var optionsJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+            _listOcorrenciaListarResponse = JsonSerializer.Deserialize<List<OcorrenciaListarResponse>>(content, optionsJson) ?? [];
+            _isLoading = false;
+
+            await base.OnInitializedAsync();
+        }}
+    }
+
+
+
